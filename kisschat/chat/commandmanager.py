@@ -63,6 +63,9 @@ class CommandManager:
         if not self._assertArgCount(user, args, 1):
             return
 
+        if args[0] == user.name:
+            return self._chat.sendTo(user, "You cannot ban yourself.")
+
         if not self._chat.ban(args[0]):
             self._chat.sendTo(user, "User already banned.")
 
