@@ -49,7 +49,7 @@ $( function() {
 
     dialog = $( "#dialog-form" ).dialog({
       autoOpen: true,
-      height: 350,
+      height: 300,
       width: 250,
       modal: true,
       buttons: {
