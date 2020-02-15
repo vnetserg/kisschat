@@ -2,10 +2,11 @@
 
 import os
 import sys
+import json
 import logging
 import argparse
 
-from tornado import websocket, web, ioloop
+from tornado import web, ioloop
 
 from .chat import WSHandlerFactory, AAAManager, ChatManager, CommandManager
 
@@ -26,12 +27,11 @@ app = web.Application([
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument("-u", "--users", required=True, help="File with user info")
     parser.add_argument("-a", "--address", default="127.0.0.1",
         help="IP address to listen on (default: 127.0.0.1)")
     parser.add_argument("-p", "--port", default=8888, type=int,
         help="TCP port to listen on (default: 8888)")
-    parser.add_argument("-t", "--token",
-        help="file with hashed authentication token")
     parser.add_argument("-d", "--debug", action="store_true",
         help="enable debug output")
     args = parser.parse_args()
@@ -40,19 +40,15 @@ def main():
     logging.basicConfig(level=loglevel, datefmt="%H:%M:%S",
                         format='[%(asctime)s] %(levelname)s: %(message)s')
 
-    if args.token:
-        try:
-            with open(args.token, "r") as f:
-                token_hash = f.read()
-        except IOError as exc:
-            logging.fatal("could not open {}: {}".format(args.token, exc.strerror))
-            sys.exit(1)
-    else:
-        logging.warning("no auth token specified, admin logins are disabled")
-        token_hash = None
+    users = json.load(open(args.users, "r"))
+    assert isinstance(users, dict)
+    for name, info in users.items():
+        assert isinstance(name, str)
+        assert isinstance(info, dict)
+        assert isinstance(info["password"], str)
 
     # Make chat stack
-    aaa = AAAManager(WSHandler, token_hash)
+    aaa = AAAManager(WSHandler, users)
     chat = ChatManager(aaa)
     cmd = CommandManager(chat)
 

@@ -1,8 +1,8 @@
 $( function() {
     var websocket, is_loggedin, reject_reason, dialog, form,
       name = $( "#name" ),
-      token = $( "#token" ),
-      allFields = $( [] ).add( name ).add( token ),
+      password = $( "#password" ),
+      allFields = $( [] ).add( name ).add( password ),
       tips = $( ".validateTips" ),
       textarea = $( "#chatbox" ),
       userlist = $( "#userlist" ),
@@ -69,8 +69,8 @@ $( function() {
 
     onWsOpen = function(event) {
         var msg = '{"name": "' + name.val() + '"'
-        if (token.val()) {
-            msg += ', "token": "' + token.val() + '"'
+        if (password.val()) {
+            msg += ', "password": "' + password.val() + '"'
         }
         msg += '}'
         websocket.send(msg)
@@ -108,11 +108,11 @@ $( function() {
         var msg;
         dialog.dialog("open");
         if (reject_reason == "username_in_use") {
-            msg = "Username is already used, please choose a different one.";
+            msg = "User is already online.";
         } else if (reject_reason == "username_banned") {
-            msg = "Username is banned, please choose a different one.";
+            msg = "User is banned.";
         } else if (reject_reason == "authentication_failed") {
-            msg = "Token authentication failed. Make sure you entered correct token or leave it empty.";
+            msg = "Authentication failed.";
         } else {
             msg = "You have been disconnected.";
         }

@@ -1,8 +1,6 @@
 
 import sys
 import json
-import base64
-import hashlib
 import getpass
 import logging
 import argparse
@@ -14,18 +12,9 @@ from .struct import User
 
 class AAAManager:
 
+    def __init__(self, transport, users):
 
-    @staticmethod
-    def hash(string):
-        utf8 = string.encode("utf8")
-        hash_ = hashlib.sha512(utf8 + b"Inn0p0l1sF0reva&!$#@**").digest()
-        return base64.b64encode(hash_).decode("ascii")
-
-
-    def __init__(self, transport, token_hash=None):
-
-        self.token_hash = token_hash
-
+        self._users = users
         self._current_usernames = set()
         self._banned_usernames = set()
         self._banned_ips = set()
@@ -42,6 +31,7 @@ class AAAManager:
 
 
     def _onConnection(self, endpoint):
+
         if endpoint.ip in self._banned_ips:
             logging.debug("<{}> tried to connect but banned".format(endpoint.ip))
             endpoint.disconnect()
@@ -68,29 +58,29 @@ class AAAManager:
 
         try:
             name = request["name"].strip()
-            token = request.get("token")
-            assert isinstance(name, str) and (not token or isinstance(token, str))
+            password = request["password"].strip()
         except (TypeError, KeyError, AttributeError, AssertionError):
-            logging.debug("<{}>: invalid auth info format, avorting".format(endpoint.ip))
+            logging.debug("<{}>: invalid auth info format, aborting".format(endpoint.ip))
             return self._abortAuthentication(endpoint)
 
         if name in self._current_usernames:
             logging.debug("<{}>: username '{}' in use, reject".format(endpoint.ip, name))
             return self._abortAuthentication(endpoint, "username_in_use")
 
-        if not name or name in self._banned_usernames:
-            logging.debug("<{}>: username '{}' banned, reject".format(endpoint.ip, name))
+        if name in self._banned_usernames:
+            logging.debug("<{}>: user '{}' is banned, reject".format(endpoint.ip, name))
             return self._abortAuthentication(endpoint, "username_banned")
 
-        if token and self.hash(token) != self.token_hash:
-            logging.debug("<{}>: wrong auth token, reject".format(endpoint.ip, name))
+        if name not in self._users or self._users[name]["password"] != password:
+            logging.debug("<{}>: user-password pair not found, reject".format(endpoint.ip, name))
             return self._abortAuthentication(endpoint, "authentication_failed")
-        elif token:
-            user_status = User.Status.admin
-        else:
-            user_status = User.Status.user
 
-        user = User(name, user_status, endpoint.ip)
+        if self._users[name].get("is_admin"):
+            status = User.Status.admin
+        else:
+            status = User.Status.user
+
+        user = User(name, status, endpoint.ip)
         self._endpoint_to_user[endpoint] = user
         self._user_to_endpoint[user] = endpoint
         self._current_usernames.add(user.name)

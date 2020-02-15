@@ -110,7 +110,7 @@ class CommandManager:
 
         messages = []
         if names:
-            messages.append("\n * ".join(["Banned user names:"] + sorted(names)))
+            messages.append("\n * ".join(["Banned users:"] + sorted(names)))
         if ips:
             messages.append("\n * ".join(["Banned IP addresses:"] + sorted(ips)))
         self._chat.sendTo(user, "\n".join(messages))
