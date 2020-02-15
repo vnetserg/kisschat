@@ -1,0 +1,9 @@
+{
+    "kami11": {
+        "password": "123",
+        "is_admin": true
+    },
+    "foo": {
+        "password": "bar"
+    }
+}
