@@ -8,6 +8,7 @@ import argparse
 import observer
 
 from .struct import User
+from ..helpers import guarded
 
 
 class AAAManager:
@@ -30,6 +31,7 @@ class AAAManager:
         transport.droppedConnection.on(self._onDisconnect)
 
 
+    @guarded
     def _onConnection(self, endpoint):
 
         if endpoint.ip in self._banned_ips:
@@ -39,6 +41,7 @@ class AAAManager:
             logging.debug("<{}>: connected".format(endpoint.ip))
 
 
+    @guarded
     def _onData(self, endpoint, data):
 
         if endpoint in self._endpoint_to_user:
@@ -88,6 +91,7 @@ class AAAManager:
         self.userConnected.trigger(user)
 
 
+    @guarded
     def _onDisconnect(self, endpoint):
         if endpoint not in self._endpoint_to_user: return
         logging.debug("<{}>: disconnected".format(endpoint.ip))

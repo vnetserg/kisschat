@@ -1,3 +1,4 @@
+import threading
 
 class FunctionMapper:
     def __init__(self):
@@ -14,3 +15,13 @@ def is_ip(string):
     except ValueError:
         return False
     return len(nums) == 4 and all(0 <= n < 256 for n in nums)
+
+def guarded(func):
+    mutex = threading.Lock()
+    def wrapper(*args, **kwarg):
+        mutex.acquire()
+        try:
+            return func(*args, **kwarg)
+        finally:
+            mutex.release()
+    return wrapper
