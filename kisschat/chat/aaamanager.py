@@ -4,6 +4,7 @@ import json
 import getpass
 import logging
 import argparse
+import threading
 
 import observer
 
@@ -12,6 +13,7 @@ from ..helpers import guarded
 
 
 class AAAManager:
+    mutex = threading.Lock()
 
     def __init__(self, transport, users):
 
@@ -31,7 +33,7 @@ class AAAManager:
         transport.droppedConnection.on(self._onDisconnect)
 
 
-    @guarded
+    @guarded(mutex)
     def _onConnection(self, endpoint):
 
         if endpoint.ip in self._banned_ips:
@@ -41,7 +43,7 @@ class AAAManager:
             logging.debug("<{}>: connected".format(endpoint.ip))
 
 
-    @guarded
+    @guarded(mutex)
     def _onData(self, endpoint, data):
 
         if endpoint in self._endpoint_to_user:
@@ -62,7 +64,7 @@ class AAAManager:
         try:
             name = request["name"].strip()
             password = request["password"].strip()
-        except (TypeError, KeyError, AttributeError, AssertionError):
+        except (KeyError, AttributeError):
             logging.debug("<{}>: invalid auth info format, aborting".format(endpoint.ip))
             return self._abortAuthentication(endpoint)
 
@@ -91,7 +93,7 @@ class AAAManager:
         self.userConnected.trigger(user)
 
 
-    @guarded
+    @guarded(mutex)
     def _onDisconnect(self, endpoint):
         if endpoint not in self._endpoint_to_user: return
         logging.debug("<{}>: disconnected".format(endpoint.ip))
